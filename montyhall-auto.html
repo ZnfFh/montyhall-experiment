@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>자동 몬티홀 시뮬레이션 (최대 10배속)</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 600px;
+        margin: 20px auto;
+        text-align: center;
+      }
+      .doors {
+        display: flex;
+        justify-content: space-around;
+        margin: 20px 0;
+      }
+      .door {
+        width: 100px;
+        height: 150px;
+        background: brown;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        border-radius: 10px;
+        position: relative;
+        transition: background 0.3s;
+      }
+      .door.opened {
+        background: #eee;
+        color: black;
+      }
+      .door .content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 32px;
+      }
+      #message {
+        font-size: 18px;
+        margin-top: 15px;
+        min-height: 40px;
+      }
+      #stats {
+        margin-top: 20px;
+        font-size: 16px;
+      }
+      button {
+        padding: 10px 15px;
+        font-size: 16px;
+        margin-top: 10px;
+      }
+      #controls {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>자동 몬티홀 시뮬레이션 (최대 10배속)</h1>
+    <p>문이 자동으로 열리고 닫힙니다. 문 바꾸기 전략으로 진행합니다.</p>
+    <div id="controls">
+      <button id="startBtn">시작하기</button>
+      <button id="stopBtn" style="display: none">멈추기</button>
+      <label for="speedSelect">배속:</label>
+      <select id="speedSelect">
+        <option value="0.5">0.5x</option>
+        <option value="1" selected>1x</option>
+        <option value="2">2x</option>
+        <option value="3">3x</option>
+        <option value="5">5x</option>
+        <option value="10">10x</option>
+      </select>
+    </div>
+
+    <div class="doors">
+      <div class="door" id="door0" data-index="0">문 1</div>
+      <div class="door" id="door1" data-index="1">문 2</div>
+      <div class="door" id="door2" data-index="2">문 3</div>
+    </div>
+    <div id="message"></div>
+    <div id="stats"></div>
+
+    <script>
+      const doors = document.querySelectorAll(".door")
+      const message = document.getElementById("message")
+      const stats = document.getElementById("stats")
+      const startBtn = document.getElementById("startBtn")
+      const stopBtn = document.getElementById("stopBtn")
+      const speedSelect = document.getElementById("speedSelect")
+
+      let carDoor, playerChoice, openedDoor
+      let switchWins = 0
+      let totalGames = 0
+      let intervalId = null
+      let speed = 1
+
+      function resetDoors() {
+        doors.forEach((d) => {
+          d.classList.remove("opened", "chosen")
+          d.textContent = `문 ${parseInt(d.dataset.index) + 1}`
+          d.style.background = "brown"
+          d.style.color = "white"
+          d.querySelector(".content")?.remove()
+        })
+      }
+
+      function openDoor(index) {
+        const door = doors[index]
+        door.classList.add("opened")
+        door.style.background = "#eee"
+        door.style.color = "black"
+        let content = document.createElement("div")
+        content.className = "content"
+        content.textContent = index === carDoor ? "🚗" : "🐐"
+        door.appendChild(content)
+      }
+
+      function delay(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms / speed))
+      }
+
+      async function runGame() {
+        resetDoors()
+        message.textContent = "새 게임 시작!"
+
+        carDoor = Math.floor(Math.random() * 3)
+        playerChoice = Math.floor(Math.random() * 3)
+        doors[playerChoice].classList.add("chosen")
+
+        message.textContent = `플레이어가 문 ${playerChoice + 1}를 선택했습니다.`
+        await delay(1000)
+
+        const candidates = [0, 1, 2].filter(
+          (i) => i !== playerChoice && i !== carDoor,
+        )
+        openedDoor = candidates[Math.floor(Math.random() * candidates.length)]
+        openDoor(openedDoor)
+        message.textContent = `사회자가 문 ${openedDoor + 1}를 열었습니다 (염소!).`
+        await delay(1000)
+
+        let switchChoice = [0, 1, 2].filter(
+          (i) => i !== playerChoice && i !== openedDoor,
+        )[0]
+        doors[playerChoice].classList.remove("chosen")
+        playerChoice = switchChoice
+        doors[playerChoice].classList.add("chosen")
+        message.textContent = `플레이어가 문을 바꿔 문 ${playerChoice + 1}를 선택했습니다.`
+        await delay(1000)
+
+        ;[0, 1, 2].forEach((i) => {
+          if (!doors[i].classList.contains("opened")) openDoor(i)
+        })
+
+        totalGames++
+        if (playerChoice === carDoor) {
+          switchWins++
+          message.textContent = `축하합니다! 자동차를 찾았습니다!`
+        } else {
+          message.textContent = `아쉽지만 염소였습니다.`
+        }
+
+        stats.innerHTML = `
+      <p>총 게임 횟수: ${totalGames}</p>
+      <p>문 바꾸기 전략 승리 횟수: ${switchWins} (${((switchWins / totalGames) * 100).toFixed(2)}%)</p>
+      <p>문 바꾸기 전략 실패 횟수: ${totalGames - switchWins} (${(((totalGames - switchWins) / totalGames) * 100).toFixed(2)}%)</p>
+    `
+        await delay(1500)
+      }
+
+      function startAuto() {
+        if (intervalId) return
+        speed = parseFloat(speedSelect.value)
+        startBtn.style.display = "none"
+        stopBtn.style.display = "inline-block"
+        intervalId = setInterval(runGame, 4500 / speed)
+      }
+
+      function stopAuto() {
+        clearInterval(intervalId)
+        intervalId = null
+        startBtn.style.display = "inline-block"
+        stopBtn.style.display = "none"
+        message.textContent = "자동 시뮬레이션이 멈췄습니다."
+      }
+
+      startBtn.addEventListener("click", startAuto)
+      stopBtn.addEventListener("click", stopAuto)
+      speedSelect.addEventListener("change", () => {
+        if (intervalId) {
+          stopAuto()
+          startAuto()
+        }
+      })
+    </script>
+  </body>
+</html>
