@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>몬티홀 문제 체험하기</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        margin-top: 30px;
+      }
+      .door {
+        display: inline-block;
+        width: 100px;
+        height: 150px;
+        margin: 10px;
+        background: #b33a3a; /* 짙은 붉은색 */
+        color: white;
+        font-size: 48px;
+        line-height: 150px;
+        cursor: pointer;
+        border-radius: 10px;
+        user-select: none;
+        transition: background-color 0.3s ease;
+      }
+      .opened {
+        background: #e3bcbc;
+        cursor: default;
+        color: #4a0000;
+        font-size: 48px;
+      }
+      #message {
+        margin-top: 20px;
+        font-size: 18px;
+      }
+      button {
+        margin-top: 20px;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>몬티홀 문제 체험하기</h1>
+    <p>문 하나를 골라 클릭하세요.</p>
+
+    <div id="doors">
+      <div class="door" data-index="0">문 1</div>
+      <div class="door" data-index="1">문 2</div>
+      <div class="door" data-index="2">문 3</div>
+    </div>
+
+    <div id="message"></div>
+    <button id="restartBtn" style="display: none">다시하기</button>
+
+    <script>
+      let doors = document.querySelectorAll(".door")
+      let message = document.getElementById("message")
+      let restartBtn = document.getElementById("restartBtn")
+
+      let carDoor = -1 // 자동차가 있는 문
+      let playerChoice = -1 // 플레이어가 처음 선택한 문
+      let openedDoor = -1 // 사회자가 연 문
+      let stage = 0 // 0:선택 대기, 1:사회자 문 열기, 2:최종 선택
+
+      function resetGame() {
+        carDoor = Math.floor(Math.random() * 3)
+        playerChoice = -1
+        openedDoor = -1
+        stage = 0
+        message.textContent = "문 하나를 골라 클릭하세요."
+        restartBtn.style.display = "none"
+        doors.forEach((d) => {
+          d.textContent = "문 " + (parseInt(d.dataset.index) + 1)
+          d.style.background = "#b33a3a"
+          d.style.color = "white"
+          d.classList.remove("opened")
+          d.style.pointerEvents = "auto"
+          d.style.cursor = "pointer"
+          d.style.fontSize = "24px"
+          d.style.lineHeight = "150px"
+        })
+      }
+
+      function openGoatDoor() {
+        for (let i = 0; i < 3; i++) {
+          if (i !== playerChoice && i !== carDoor) {
+            openedDoor = i
+            doors[i].textContent = "🐐"
+            doors[i].style.background = "#e3bcbc"
+            doors[i].style.color = "#4a0000"
+            doors[i].classList.add("opened")
+            doors[i].style.pointerEvents = "none"
+            doors[i].style.cursor = "default"
+            doors[i].style.fontSize = "48px"
+            doors[i].style.lineHeight = "150px"
+            break
+          }
+        }
+      }
+
+      function finalChoice(newChoice) {
+        doors.forEach((d) => (d.style.pointerEvents = "none"))
+        if (newChoice === carDoor) {
+          doors[newChoice].textContent = "🚗"
+          doors[newChoice].style.background = "#27632a" // 짙은 초록 (성공)
+          doors[newChoice].style.color = "white"
+          doors[newChoice].style.fontSize = "48px"
+          doors[newChoice].style.lineHeight = "150px"
+          message.textContent = "축하합니다! 자동차를 찾았어요!"
+        } else {
+          doors[newChoice].textContent = "🐐"
+          doors[newChoice].style.background = "#8b0000" // 짙은 빨강 (실패)
+          doors[newChoice].style.color = "white"
+          doors[newChoice].style.fontSize = "48px"
+          doors[newChoice].style.lineHeight = "150px"
+
+          doors[carDoor].textContent = "🚗"
+          doors[carDoor].style.background = "#27632a"
+          doors[carDoor].style.color = "white"
+          doors[carDoor].style.fontSize = "48px"
+          doors[carDoor].style.lineHeight = "150px"
+
+          message.textContent =
+            "아쉽네요. 자동차는 문 " + (carDoor + 1) + "에 있었습니다."
+        }
+        restartBtn.style.display = "inline-block"
+      }
+
+      doors.forEach((door) => {
+        door.addEventListener("click", () => {
+          let idx = parseInt(door.dataset.index)
+
+          if (stage === 0) {
+            playerChoice = idx
+            message.textContent = `문 ${playerChoice + 1}을(를) 선택했습니다. 사회자가 염소가 있는 문을 엽니다.`
+            openGoatDoor()
+            stage = 1
+            message.textContent +=
+              " 이제 선택을 바꾸시겠습니까? 문을 다시 선택하세요."
+          } else if (stage === 1) {
+            if (idx === openedDoor) {
+              message.textContent = "이미 연 문입니다. 다른 문을 선택하세요."
+              return
+            }
+            finalChoice(idx)
+            stage = 2
+          }
+        })
+      })
+
+      restartBtn.addEventListener("click", () => resetGame())
+
+      resetGame()
+    </script>
+  </body>
+</html>
