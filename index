@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>몬티홀 실험 모음</title>
+<style>
+  body { font-family: Arial, sans-serif; text-align: center; background: #f9f9f9; padding: 40px; }
+  h1 { color: #333; }
+  a.button {
+    display: inline-block;
+    margin: 20px;
+    padding: 15px 30px;
+    background-color: #cc3333;
+    color: white;
+    text-decoration: none;
+    font-size: 20px;
+    border-radius: 8px;
+    transition: background-color 0.3s;
+  }
+  a.button:hover {
+    background-color: #a02a2a;
+  }
+</style>
+</head>
+<body>
+
+<h1>몬티홀 실험</h1>
+<p>아래 버튼을 눌러 원하는 몬티홀 실험을 실행하세요.</p>
+
+<a href="automatic.html" class="button">자동 실행 실험</a>
+<a href="interactive.html" class="button">직접 체험 실험</a>
+
+</body>
+</html>
